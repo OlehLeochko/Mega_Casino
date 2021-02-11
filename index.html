@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <script>
+      class GameMachine {
+        constructor(number) {
+          this.number = number;
+        }
+        get getMoney() {
+          return `There is ${this.number}$ in this game machine`;
+        }
+        takeMoney(number) {
+          if (this.number - number >= 0) {
+            this.number -= number;
+            return `Congratulations. You took ${number}$`;
+          }
+          return "There is not such money in this game machine";
+        }
+        putMoney(number) {
+          this.number += number;
+        }
+        play(money) {
+          // if (money > 0 && this.number >= money * 2) {
+          this.number += money;
+          //  this.money = money;
+          let firstNumber = Math.floor(Math.random() * (10 - 0)) + 0;
+          let secondNumber = Math.floor(Math.random() * (10 - 0)) + 0;
+          let thirdNumber = Math.floor(Math.random() * (10 - 0)) + 0;
+          console.log(`${firstNumber}-${secondNumber}-${thirdNumber}`);
+          if (
+            firstNumber === secondNumber &&
+            firstNumber === thirdNumber &&
+            secondNumber === thirdNumber
+          ) {
+            money *= 3;
+            this.number -= money;
+            console.log(
+              `Congratulations! You have multiplied your sum by three`
+            );
+            return money;
+          }
+          if (
+            firstNumber === secondNumber ||
+            firstNumber === thirdNumber ||
+            secondNumber === thirdNumber
+          ) {
+            money *= 2;
+            this.number -= money;
+            console.log(`Congratulations! You have multiplied your sum by two`);
+            return money;
+          } else {
+            /* this.number += money;*/
+            console.log("Unfortunately you lost");
+            return -money;
+          }
+          /* else{
+                this
+            }*/
+          //} else return "There is not enough count of money in this machine";
+        }
+      }
+      class Casino {
+        constructor(name) {
+          this.name = name;
+          this.gameMachines = [];
+        }
+        get getMoneyCasino() {
+          return this.gameMachines.reduce((acc, machine) => {
+            return acc + machine.number;
+          }, 0);
+        }
+        get getMachineCount() {
+          return `Number of slot machines in this casino - ${this.gameMachines.length}`;
+        }
+      }
+      class User {
+        constructor(name, money) {
+          this.name = name;
+          this.money = money;
+          this._selectMachine = null;
+        }
+        set selectMachine(machine) {
+          this._selectMachine = machine;
+        }
+        get selectMachine() {
+          return this._selectMachine;
+        }
+        play(money) {
+          if (this._selectMachine === null) {
+            console.log("You should select a machine for game");
+            return;
+          }
+          if (this.money < money) {
+            console.log(
+              `Unfortunately you don't have enough money for this game`
+            );
+            return;
+          }
+          this.money += this._selectMachine.play(money);
+        }
+      }
+      class SuperAdmin extends User {
+        constructor(name, money) {
+          super(name, money);
+        }
+        createCasino(name) {
+          let newCasino = new Casino(name);
+          this.casino = newCasino;
+          return newCasino;
+        }
+        createGameMachine(money) {
+          /*console.log(this.money);*/
+          if (money > this.money) {
+            console.log(
+              `you need another ${money - this.money}$ for create this machine`
+            );
+            return;
+          }
+          const newMachine = new GameMachine(money);
+          this.casino.gameMachines.push(newMachine);
+          this.money -= money;
+          return newMachine;
+        }
+        takeMoneyFromCasino(sum) {
+          const machines = [...this.casino.gameMachines];
+          const allBank = machines.reduce(
+            (acc, machine) => acc + machine.number,
+            0
+          );
+          if (sum > allBank) {
+            console.error("Sorry, but sum is larget that casino bank");
+            return;
+          }
+          const percentageFromBank = sum / allBank;
+          machines.forEach((machine) => {
+            machine.number = +(
+              machine.number *
+              (1 - percentageFromBank)
+            ).toFixed(2);
+          });
+
+          this.casino.machines = [...machines];
+          this.money += sum;
+        }
+        addMoneyToCasino(money) {
+          if (money <= 0) {
+            console.log("The amount of money can't be deductible");
+            return;
+          }
+          const gameMachinesNumber = this.casino.gameMachines.length;
+          if (!gameMachinesNumber) {
+            console.log("You should to create at least one machine");
+            return;
+          }
+          if (money >= this.money) {
+            console.log("You don't have enough money for adding");
+            return;
+          }
+          this.casino.gameMachines.forEach((item) => {
+            item.number += money / gameMachinesNumber;
+          });
+          this.money -= money;
+        }
+        addMoneyToGameMachine(id, money) {
+          if (money <= 0) {
+            console.log("Sum must be greater than zero");
+            return;
+          }
+          if (money >= this.money) {
+            console.log("You don't have enough money to add to game machine");
+            return;
+          }
+          if (this.casino.gameMachines[id] === undefined) {
+            console.log("There is not game machine with such ID");
+            return;
+          }
+          this.money -= money;
+          this.casino.gameMachines[id].number += money;
+        }
+        removeGameMachine(id) {
+          const gameMachines = [...this.casino.gameMachines];
+          if (!gameMachines.length) {
+            console.log("There is not any machine");
+            return;
+          }
+          if (gameMachines[id] === undefined) {
+            console.log("Game machine ID is wrong.");
+            return;
+          }
+          const sum = gameMachines[id].number;
+          gameMachines.splice(id, 1);
+          const machineNumber = gameMachines.length;
+
+          gameMachines.forEach((item) => {
+            const profit = (sum / machineNumber).toFixed(2);
+            item.number += +profit;
+          });
+          this.casino.gameMachines = [...gameMachines];
+        }
+      }
+      /*
+      let oleh = new GameMachine(150);
+      console.log(oleh.getMoney());
+      console.log(oleh.takeMoney(160));
+      console.log(oleh.takeMoney(140));
+      console.log(oleh.getMoney());
+      console.log(oleh.putMoney(40));
+      console.log(oleh.getMoney());
+      console.log(oleh.play(20));
+      console.log(oleh.getMoney());*/
+      const admin = new SuperAdmin("Oleh", 8000);
+      const casino = admin.createCasino("My casino");
+      const firstMachine = admin.createGameMachine(200);
+      console.log(casino);
+      admin.createGameMachine(400);
+      admin.createGameMachine(800);
+      console.log(casino.getMachineCount);
+      console.log(admin);
+      admin.takeMoneyFromCasino(100);
+      admin.selectMachine = firstMachine;
+      admin.play(10);
+      console.log(admin);
+      admin.play(20);
+      console.log(firstMachine.takeMoney(100));
+      console.log(firstMachine.getMoney);
+      console.log(admin);
+      admin.play(30);
+      console.log(admin);
+      admin.play(40);
+      firstMachine.putMoney(100);
+      console.log(firstMachine.getMoney);
+      console.log(casino.getMoneyCasino);
+      admin.addMoneyToCasino(100);
+      console.log(casino);
+      admin.addMoneyToGameMachine(0, 100);
+
+      const secondMachine = new GameMachine(1000);
+      console.log(secondMachine.getMoney);
+      console.log(secondMachine.takeMoney(100));
+      console.log(secondMachine.getMoney);
+
+      const userAlina = new User("Alina Leochko", 500);
+      userAlina.selectMachine = secondMachine;
+      console.log(userAlina);
+      userAlina.play(100);
+      console.log(userAlina);
+      admin.removeGameMachine(1);
+      console.log(casino);
+      userAlina.play(60);
+      userAlina.play(80);
+      console.log(casino.getMoneyCasino);
+    </script>
+  </body>
+</html>
